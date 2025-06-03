@@ -3,7 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_product">
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.rizqi_elektronik.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_product"
@@ -21,25 +27,5 @@
         android:id="@+id/navigation_profile"
         android:name="com.example.rizqi_elektronik.ui.profile.ProfileFragment"
         android:label="@string/title_profile"
-        tools:layout="@layout/fragment_profile">
-        <action
-            android:id="@+id/action_profileFragment_to_editProfileFragment"
-            app:destination="@id/editProfileFragment" />
-        <action
-            android:id="@+id/action_profileFragment_to_kontakFragment"
-            app:destination="@id/kontakFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/editProfileFragment"
-        android:name="com.example.rizqi_elektronik.ui.profile.EditProfileFragment"
-        android:label="Edit Profile"
-        tools:layout="@layout/fragment_edit_profile" />
-
-    <fragment
-        android:id="@+id/kontakFragment"
-        android:name="com.example.rizqi_elektronik.ui.profile.KontakFragment"
-        android:label="Kontak"
-        tools:layout="@layout/fragment_kontak" />
-
+        tools:layout="@layout/fragment_profile" />
 </navigation>

@@ -11,6 +11,6 @@
     <color name="green">#4CAF50</color>
     <color name="text_primary">#535069</color>
     <color name="primary">#106EE9</color>
+    <color name="secondary">#535659</color>
     <color name="red">#D30000</color>
-    <color name="hint_text">#1039A4</color>
 </resources>

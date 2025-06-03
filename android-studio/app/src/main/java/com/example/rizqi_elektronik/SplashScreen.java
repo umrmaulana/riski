@@ -1,8 +1,7 @@
+// SplashScreen.java
 package com.example.rizqi_elektronik;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -20,27 +19,22 @@ public class SplashScreen extends AppCompatActivity {
         setContentView(R.layout.activity_splash_screen);
         ImageView imgHurufLogo = findViewById(R.id.imgHuruflogo);
 
-        // Animasi turun ke bawah untuk gambar logo
         Animation animDown = AnimationUtils.loadAnimation(this, R.anim.fade_in_translate_down);
         imgHurufLogo.startAnimation(animDown);
 
-
-        // Cek status login dari SharedPreferences
-        SharedPreferences sharedPreferences = getSharedPreferences("user_session", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE);
         boolean isLoggedIn = sharedPreferences.contains("email");
 
         new Handler().postDelayed(() -> {
             Intent intent;
             if (isLoggedIn) {
-                // Arahkan ke halaman utama (misalnya OrderFragment atau MainActivity)
-                intent = new Intent(SplashScreen.this, MainActivity.class);  // Ganti dengan aktivitas beranda Anda
+                // langsung ke MainActivity (yang buka HomeFragment)
+                intent = new Intent(SplashScreen.this, MainActivity.class);
             } else {
-                // Arahkan ke halaman login
-                intent = new Intent(SplashScreen.this, MainLogin.class);
+                intent = new Intent(SplashScreen.this, MainActivity.class);
             }
             startActivity(intent);
             finish();
         }, SPLASH_DELAY);
-
     }
 }

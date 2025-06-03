@@ -17,7 +17,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.rizqi_elektronik.ui.order.OrderFragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -38,7 +37,7 @@ public class MainLogin extends AppCompatActivity {
 
     private ProgressDialog pd;
     private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin;
+    private MaterialButton btnLogin, btnGuest;
     private TextView tvRegister;
 
     @SuppressLint("MissingInflatedId")
@@ -52,6 +51,7 @@ public class MainLogin extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
+        btnGuest = findViewById(R.id.btnGuest); // Tambahan
         tvRegister = findViewById(R.id.tvRegister);
 
         // Klik "Daftar"
@@ -70,6 +70,23 @@ public class MainLogin extends AppCompatActivity {
                     etEmail.getText().toString().trim(),
                     etPassword.getText().toString().trim()
             );
+        });
+
+        // ✅ Klik Guest
+        btnGuest.setOnClickListener(v -> {
+            // Simpan status login sebagai guest
+            SharedPreferences sharedPreferences = getSharedPreferences("user_session", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean("is_logged_in", true);
+            editor.putBoolean("is_guest", true); // Tandai sebagai tamu
+            editor.apply();
+
+            Toast.makeText(MainLogin.this, "Masuk sebagai Tamu", Toast.LENGTH_SHORT).show();
+
+            // Pindah ke halaman utama
+            Intent intent = new Intent(MainLogin.this, MainActivity.class);
+            startActivity(intent);
+            finish();
         });
 
         // Set Edge-to-Edge padding
@@ -101,17 +118,17 @@ public class MainLogin extends AppCompatActivity {
                         if ("1".equals(json.optString("result"))) {
                             JSONObject data = json.getJSONObject("data");
                             if ("1".equals(data.optString("status"))) {
-                                // ✅ Simpan ke SharedPreferences
+                                // Simpan ke SharedPreferences
                                 SharedPreferences sharedPreferences = getSharedPreferences("user_session", Context.MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPreferences.edit();
                                 editor.putString("email", data.optString("email"));
                                 editor.putString("nama", data.optString("nama"));
                                 editor.putBoolean("is_logged_in", true);
+                                editor.putBoolean("is_guest", false);
                                 editor.apply();
 
                                 Toast.makeText(MainLogin.this, "Login Berhasil", Toast.LENGTH_SHORT).show();
 
-                                // Pindah ke Home (MainActivity yang berisi OrderFragment)
                                 Intent intent = new Intent(MainLogin.this, MainActivity.class);
                                 startActivity(intent);
                                 finish();

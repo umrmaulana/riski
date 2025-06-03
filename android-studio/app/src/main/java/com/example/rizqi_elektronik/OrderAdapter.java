@@ -23,11 +23,13 @@ import java.util.List;
 public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> {
 
     private List<OrderItem> orderItemList;
-    private Context context;  // Tambahkan context ke adapter
+    private Context context;
+    private OnOrderUpdateListener onOrderUpdateListener;
 
-    public OrderAdapter(List<OrderItem> orderItemList, Context context) {
+    public OrderAdapter(List<OrderItem> orderItemList, Context context, OnOrderUpdateListener onOrderUpdateListener) {
         this.orderItemList = orderItemList;
-        this.context = context; // Menyimpan context untuk akses SharedPreferences
+        this.context = context;
+        this.onOrderUpdateListener = onOrderUpdateListener;
     }
 
     @NonNull
@@ -79,50 +81,52 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
     }
 
     private void removeProductFromOrder(int position) {
-        // Check if position is valid
         if (position >= 0 && position < orderItemList.size()) {
-            // Menghapus item berdasarkan posisi dari list
             orderItemList.remove(position);
 
-            // Update SharedPreferences setelah penghapusan
             SharedPreferences sharedPreferences = context.getSharedPreferences("OrderPrefs", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
 
-            // Convert the updated order list to JSON
             String updatedOrderJson = new Gson().toJson(orderItemList);
             editor.putString("order_items", updatedOrderJson);
             editor.apply();
 
-            // Notify the adapter
             notifyItemRemoved(position);
 
-            // Jika tidak ada item tersisa, kita juga dapat membersihkan SharedPreferences
             if (orderItemList.isEmpty()) {
-                editor.remove("order_items").apply();  // Hapus order jika kosong
+                editor.remove("order_items").apply();
+            }
+
+            // Notify the fragment to update the total
+            if (onOrderUpdateListener != null) {
+                onOrderUpdateListener.updateTotal();
             }
         } else {
-            // Log an error or handle it in a way that makes sense for your app
             Log.e("OrderAdapter", "Invalid position: " + position);
         }
     }
-
-
 
     private void updateQuantity(int position, int newQty) {
         OrderItem orderItem = orderItemList.get(position);
         orderItem.setQty(newQty);
 
-        // Update SharedPreferences after quantity change
         SharedPreferences sharedPreferences = context.getSharedPreferences("OrderPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        // Convert the updated order list to JSON
         String updatedOrderJson = new Gson().toJson(orderItemList);
         editor.putString("order_items", updatedOrderJson);
         editor.apply();
 
-        // Notify the adapter
         notifyItemChanged(position);
+
+        // Notify the fragment to update the total
+        if (onOrderUpdateListener != null) {
+            onOrderUpdateListener.updateTotal();
+        }
+    }
+
+    public interface OnOrderUpdateListener {
+        void updateTotal();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -138,8 +142,8 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.ViewHolder> 
             tvQty = itemView.findViewById(R.id.tvQty);
             tvOrderSubtotal = itemView.findViewById(R.id.tvOrderSubtotal);
             btnHapus = itemView.findViewById(R.id.btnHapus);
-            btnPlus = itemView.findViewById(R.id.btnPlus);  // Link to the Plus button
-            btnMinus = itemView.findViewById(R.id.btnMinus);  // Link to the Minus button
+            btnPlus = itemView.findViewById(R.id.btnPlus);
+            btnMinus = itemView.findViewById(R.id.btnMinus);
         }
     }
 }

@@ -23,6 +23,11 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
     private List<Product> productList;
     private Context context;
@@ -44,26 +49,52 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product product = productList.get(position);
 
+        // Set data produk dasar
         holder.tvMerk.setText(product.getMerk());
         holder.tvPrice.setText(String.format("Rp %,.0f", product.getHargajual()));
-        holder.tvStock.setText("Stok: " + product.getStok());
+        holder.tvStock.setText(product.getStok() <= 0 ? "Stok: Habis" : "Stok: " + product.getStok());
 
-        // Jika stok habis, ubah warna jadi merah
         if (product.getStok() <= 0) {
-            holder.tvStock.setText("Stok: Habis");
             holder.tvStock.setTextColor(Color.RED);
-            holder.imgbtnCart.setVisibility(View.INVISIBLE); // Sembunyikan tombol keranjang jika ingin
+            holder.imgbtnCart.setVisibility(View.INVISIBLE);
         } else {
             holder.tvStock.setTextColor(Color.rgb(0, 100, 0));
             holder.imgbtnCart.setVisibility(View.VISIBLE);
         }
 
-        // Load gambar menggunakan Glide
         Glide.with(context)
                 .load(ServerAPI.BASE_URL_Image + product.getFoto())
                 .into(holder.ivProduct);
 
-        // Ketika tombol keranjang diklik
+        // Panggil API untuk mendapatkan viewCount terbaru
+        RegisterAPI api = RetrofitClientInstance.getRetrofitInstance().create(RegisterAPI.class);
+        Call<ResponseBody> callView = api.getViewCount(product.getKode());
+        callView.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        String responseStr = response.body().string();
+                        int viewCount = Integer.parseInt(responseStr.trim());
+                        product.setViewCount(viewCount);
+                        holder.tvViewProduct.setText("View : " + viewCount);
+                    } catch (Exception e) {
+                        // fallback jika parsing gagal
+                        holder.tvViewProduct.setText("View : " + product.getViewCount());
+                    }
+                } else {
+                    holder.tvViewProduct.setText("View : " + product.getViewCount());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                holder.tvViewProduct.setText("View : " + product.getViewCount());
+            }
+        });
+
+        // event tombol keranjang dll tetap seperti sebelumnya...
+
         holder.imgbtnCart.setOnClickListener(v -> {
             if (product.getStok() > 0) {
                 OrderItem orderItem = new OrderItem(
@@ -71,22 +102,41 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                         product.getMerk(),
                         product.getHargajual(),
                         product.getStok(),
-                        1 // Default qty
+                        1
                 );
-
                 saveProductToOrder(orderItem);
             } else {
                 Toast.makeText(context, "Stok produk kosong", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Pass the Product object using putExtra (no casting to CharSequence)
         holder.imgbtnDeskripsi.setOnClickListener(v -> {
-            Intent intent = new Intent(context, Detail.class);
-            intent.putExtra("produk", product); // Pass the whole product object
-            context.startActivity(intent); // Start the Detail Activity
+            RegisterAPI api2 = RetrofitClientInstance.getRetrofitInstance().create(RegisterAPI.class);
+            Call<ResponseBody> call = api2.updateView(product.getKode());
+            call.enqueue(new Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    if (response.isSuccessful()) {
+                        // Update lokal viewCount (tambahkan 1)
+                        product.setViewCount(product.getViewCount() + 1);
+                        holder.tvViewProduct.setText("View : " + product.getViewCount());
+
+                        Intent intent = new Intent(context, Detail.class);
+                        intent.putExtra("produk", product);
+                        context.startActivity(intent);
+                    } else {
+                        Toast.makeText(context, "Gagal update view", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    Toast.makeText(context, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
+
 
     @Override
     public int getItemCount() {
@@ -137,9 +187,33 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         }
     }
 
+    // Method untuk menghitung total harga keranjang
+    public static double calculateTotal(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("OrderPrefs", Context.MODE_PRIVATE);
+        String orderJson = sharedPreferences.getString("order_items", "[]");
+        Type type = new TypeToken<List<OrderItem>>() {}.getType();
+        List<OrderItem> orderItems;
+
+        try {
+            orderItems = new Gson().fromJson(orderJson, type);
+            if (orderItems == null) {
+                orderItems = new ArrayList<>();
+            }
+        } catch (Exception e) {
+            orderItems = new ArrayList<>();
+            android.util.Log.e("ProductAdapter", "Gagal parsing JSON: " + e.getMessage());
+        }
+
+        double total = 0;
+        for (OrderItem item : orderItems) {
+            total += item.getHargajual() * item.getQty();  // Harga * Kuantitas
+        }
+        return total;
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivProduct, imgbtnCart, imgbtnDeskripsi;
-        TextView tvMerk, tvPrice, tvStock;
+        TextView tvMerk, tvPrice, tvStock, tvViewProduct;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -147,6 +221,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
             tvMerk = itemView.findViewById(R.id.tvNama);
             tvPrice = itemView.findViewById(R.id.tvHarga);
             tvStock = itemView.findViewById(R.id.tvStok);
+            tvViewProduct = itemView.findViewById(R.id.tvViewProduct); // Pastikan ada TextView untuk view count di layout XML
             imgbtnCart = itemView.findViewById(R.id.imgbtnCart);
             imgbtnDeskripsi = itemView.findViewById(R.id.imgbtnDeskripsi);
         }

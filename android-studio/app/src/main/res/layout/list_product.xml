@@ -54,10 +54,22 @@
         android:layout_marginBottom="5dp"
         android:text=""
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/tvStok"
+        app:layout_constraintBottom_toTopOf="@+id/tvViewProduct"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvNama" />
+
+    <TextView
+        android:id="@+id/tvViewProduct"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:text="view :"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toTopOf="@+id/tvStok"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvHarga" />
 
     <TextView
         android:id="@+id/tvStok"
@@ -72,7 +84,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvHarga" />
+        app:layout_constraintTop_toBottomOf="@+id/tvViewProduct" />
+
 
     <ImageView
         android:id="@+id/imgbtnCart"

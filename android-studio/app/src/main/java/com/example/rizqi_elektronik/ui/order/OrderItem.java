@@ -7,8 +7,7 @@ public class OrderItem {
     private int stok;
     private int qty;
 
-
-    // Konstruktor dengan parameter
+    // Constructor
     public OrderItem(String foto, String merk, double hargajual, int stok, int qty) {
         this.foto = foto;
         this.merk = merk;
@@ -17,11 +16,16 @@ public class OrderItem {
         this.qty = qty;
     }
 
+    // Getters and Setters
     public String getFoto() { return foto; }
     public String getMerk() { return merk; }
     public double getHargajual() { return hargajual; }
     public int getStok() { return stok; }
     public int getQty() { return qty; }
-
     public void setQty(int qty) { this.qty = qty; }
+
+    // Calculate total price based on quantity
+    public double getTotal() {
+        return hargajual * qty;
+    }
 }
